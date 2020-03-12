@@ -217,8 +217,8 @@ namespace argos {
    /********************************************************************************/
 
    void CDIQtOpenGLUserFunctions::EntityMoved(CEntity& c_entity,
-                                               const CVector3& c_old_pos,
-                                               const CVector3& c_new_pos) {
+                                              const CVector3& c_old_pos,
+                                              const CVector3& c_new_pos) {
       /* was a builderbot moved? */
       CBuilderBotEntity* pcBuilderBot = dynamic_cast<CBuilderBotEntity*>(&c_entity);
       if(pcBuilderBot == nullptr) {
@@ -271,7 +271,8 @@ namespace argos {
       glRotatef(ToDegrees(cYAngle).GetValue(), 0.0f, 1.0f, 0.0f);
       glRotatef(ToDegrees(cZAngle).GetValue(), 0.0f, 0.0f, 1.0f);
       std::istringstream issInstructions, issArgument;
-      issInstructions.str(c_debug_entity.GetBuffer("draw"));
+      //issInstructions.str(c_debug_entity.GetBuffer("draw"));
+      issInstructions.str("");
       for(std::string strInstruction; std::getline(issInstructions, strInstruction); ) {
          std::vector<std::string> vecArguments;
          Tokenize(strInstruction, vecArguments, "()");
