@@ -339,14 +339,19 @@ local create_process_rules_node = function(rules, rule_type, final_target)
             return count
          end
          structure_matching_result = true
-         if tablelength(visible_structure) ~= #rule_structure then
-            structure_matching_result = false
-         else
+         if tablelength(visible_structure) ~= #rule_structure then  -- need to be comment with the intelligence of block
+            structure_matching_result = false  		 	--
+         else							--
             for j, rule_block in pairs(rule_structure) do
                block_matched = false
                for k, visible_block in pairs(visible_structure) do
+DebugMSG("visible_block.index = ", visible_block.index)
+DebugMSG("rule_block.index = ", rule_block.index)
                   if visible_block.index == rule_block.index then --found required index
+DebugMSG("visible_block.type = ", visible_block.type)
+DebugMSG("rule_block.type = ", rule_block.type)
                      if (visible_block.type == rule_block.type) or (rule_block.type == 'X') then -- found the same required type
+DebugMSG("matched!")
                         block_matched = true
                         break
                      end
@@ -357,7 +362,7 @@ local create_process_rules_node = function(rules, rule_type, final_target)
                   break
                end
             end
-         end
+         end							--
          return structure_matching_result
       end
       function get_reference_id_from_index(reference_index, visible_structure)
@@ -458,34 +463,30 @@ local create_process_rules_node = function(rules, rule_type, final_target)
 
          return result
       end
-      -----------------------------------------------------------------------------
-      ------------------ matching light source with rule --------------------------
-      function match_light_source(actual_lights, rule_light)
-         result = false
-         for i, actual_light in pairs(actual_lights) do
-            if actual_light == rule_light then 
-               result = true
-            end
-         end
-         
-         return result
-      end
+
       ----------------------------------------------------------------------------
       ------------------ matching rules and getting safe targets ------------------
       -- pprint.pprint(structure_list)
       for i, rule in pairs(rules.list) do
+DebugMSG("rule loop = ", i, "rule.rule_type = ",rule.rule_type)
          if rule.rule_type == rule_type then
             match_result = false
             for j, visible_structure in pairs(structure_list) do
                if target_block_safe(visible_structure, rule.target.reference_index) == true then
-                  res1 = match_structures(visible_structure, rule.structure)
-                  res2 = match_light_source(api.light_source, rule.light)
-                  if res1 == true and res2 == true then
+                  res = match_structures(visible_structure, rule.structure)
+DebugMSG("visible structure")
+DebugMSG(visible_structure)
+DebugMSG("res = ", res)
+                  if res == true then
                      match_result = true
                      possible_target = {}
                      possible_target.reference_id =
                         get_reference_id_from_index(rule.target.reference_index, visible_structure)
+
                      possible_target.offset = rule.target.offset_from_reference
+DebugMSG("possible_target.reference_id = ", possible_target.reference_id)
+DebugMSG("possible_target.offset = ", possible_target.offset)
+DebugMSG("rule.target.type = ", rule.target.type)
                      possible_target.type = rule.target.type
                      possible_target.safe = true
                      table.insert(targets_list, possible_target)
@@ -523,6 +524,7 @@ local create_process_rules_node = function(rules, rule_type, final_target)
       --------------------------------------------------------------
       --------------------- Target selection methods ---------------
       if rules.selection_method == 'nearest_win' then
+         --DebugMSG('nearest_win')
          -----choose the nearest target from the list -------
          minimum_distance = 9999999
          for i, possible_target in pairs(targets_list) do
@@ -532,7 +534,10 @@ local create_process_rules_node = function(rules, rule_type, final_target)
                   if distance_from_target < minimum_distance then
                      minimum_distance = distance_from_target
                      final_target.reference_id = tonumber(possible_target.reference_id)
+               DebugMSG("final_target.reference_id = ", final_target.reference_id)
+               DebugMSG("possible_target.offset = ", possible_target.offset)
                      final_target.offset = possible_target.offset
+               DebugMSG("final_target.offset = ", final_target.offset)
                      final_target.type = possible_target.type
                      final_target.safe = possible_target.safe
                   end
@@ -541,6 +546,7 @@ local create_process_rules_node = function(rules, rule_type, final_target)
          end
       elseif rules.selection_method == 'furthest_win' then
          -----choose the furthest target from the list -------
+         --DebugMSG('furthest_win')
          maximum_distance = 0
          for i, possible_target in pairs(targets_list) do
             for j, block in pairs(api.blocks) do
@@ -575,7 +581,7 @@ local create_process_rules_node = function(rules, rule_type, final_target)
          end
       end
       -- pprint.pprint(final_target)
-      DebugMSG('final target:', final_target)
+      --DebugMSG('final target:', final_target)
       if #targets_list > 0 then
          return false, true
       else

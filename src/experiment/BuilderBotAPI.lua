@@ -7,7 +7,8 @@
 --
 ----------------------------------------------------
 require('BlockTracking')
-pprint = require('pprint')
+DebugMSG.register('BuilderBotAPI')
+
 local builderbot_api = {}
 
 -- consts --------------------------------------------
@@ -156,16 +157,19 @@ builderbot_api.subprocess_leds = function()
    for i, block in ipairs(builderbot_api.blocks) do
       for j, tag in pairs(block.tags) do
          tag.type = 0
-         block.type = 0
+         block.type = nil
          for j, led_loc in ipairs(led_loc_for_tag) do
             local led_loc_for_camera = vector3(led_loc):rotate(tag.orientation) + tag.position
             local color_number = robot.camera_system.detect_led(led_loc_for_camera)
             if color_number ~= tag.type and color_number ~= 0 then
-               tag.type = color_number
-               block.type = tag.type
+               tag.type = color_number   
             end
+            block.type = tag.type 
+            DebugMSG(j,'color_number:', color_number)
+            DebugMSG(j,'tag_type:',tag.type)
          end
       end
+      DebugMSG(i,'block_type:',block.type)
    end
 end
 
@@ -224,43 +228,6 @@ builderbot_api.process_obstacles = function()
    end
 end
 
-
-builderbot_api.process_lights = function()
-   function exists(items, studied_item)
-      for index, value in pairs(items) do
-         if value == studied_item then
-            return true
-         end
-      end
-
-      return false
-   end
-   builderbot_api.light_source = {}
-   light_threshold = 0.35
-   -- range_finders_illuminance = {}
-   for i, rf in pairs(robot.rangefinders) do
-      -- print(tostring(robot.id),tostring(i), tostring(rf.illuminance))
-      if i == "1" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"front") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "front"
-      elseif i == "3" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"right") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "right"
-      elseif i == "4" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"right") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "right"
-      elseif i == "6" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"back") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "back"
-      elseif i == "7" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"back") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "back"
-      elseif i == "9" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"left") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "left"
-      elseif i == "10" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"left") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "left"
-      elseif i == "12" and rf.illuminance > light_threshold and exists(builderbot_api.light_source,"front") ~= true then 
-         builderbot_api.light_source[#builderbot_api.light_source+1] = "front"
-      end
-   end
-   
-end
-
 -- process for each step -----------------------------
 ------------------------------------------------------
 
@@ -270,7 +237,6 @@ builderbot_api.process = function()
    -- process blocks and obstacle should happen after process positions
    builderbot_api.process_blocks()
    builderbot_api.process_obstacles()
-   builderbot_api.process_lights()
 end
 
 -- debug arrow ---------------------------------------

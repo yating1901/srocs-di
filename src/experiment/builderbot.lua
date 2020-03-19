@@ -33,46 +33,76 @@ function reset()
    local bt_node = {
       type = 'sequence*',
       children = {
+         -- pick up
          {
-            type = 'sequence*',
+            type = "selector*",
             children = {
-               -- prepare, lift to 0.13
+               -- am I holding a block? If yes, go to place
+               function()
+                  if robot.rangefinders['underneath'].proximity < api.parameters.proximity_touch_tolerance then
+                     return false, true
+                  else
+                     return false, false
+                  end
+               end,
+               -- pickup procedure
                {
-                  type = 'selector',
+                  type = "sequence*",
                   children = {
-                     -- if lift reach position(0.13), return true, stop selector
-                     function()
-                        if
-                           robot.lift_system.position > 0.13 - api.parameters.lift_system_position_tolerance and
-                              robot.lift_system.position < 0.13 + api.parameters.lift_system_position_tolerance
-                         then
-                           DebugMSG('lift_in position')
-                           return false, true
-                        else
-                           DebugMSG('lift_not in position')
-                           return false, false
-                        end
-                     end,
-                     -- set position(0.13)
-                     function()
-                        robot.lift_system.set_position(0.13)
-                        return true -- always running
-                     end
-                  }
-               }
-            }
+                     -- search
+                     app.create_search_block_node(
+                        app.create_process_rules_node(rules, 'pickup', BTDATA.target)
+                     ),
+                     -- approach
+                     app.create_curved_approach_block_node(BTDATA.target, 0.2),
+                     -- pickup 
+                     app.create_pickup_block_node(BTDATA.target, 0.2),
+                  },
+               },
+            },
          },
-         app.create_process_rules_node(rules, 'place', BTDATA.target),
-         function()
-            if BTDATA.target == nil then
-               pprint.pprint('target: ', 'nil')
-               return false, false
-            else
-               pprint.pprint('target: ', BTDATA.target)
-               return false, true
-            end
-         end
-      }
+         -- place
+         {
+            type = "selector*",
+            children = {
+               -- Is my hand empty? If yes, go to pickup
+               function()
+                  if robot.rangefinders['underneath'].proximity > api.parameters.proximity_touch_tolerance then
+                     return false, true
+                  else
+                     return false, false
+                  end
+               end,
+               -- place procedure
+               {
+                  type = "sequence*",
+                  children = {
+                     -- search
+                     app.create_search_block_node(
+                        app.create_process_rules_node(rules, 'place', BTDATA.target)
+                     ),
+                     function()
+                        DebugMSG("BTDATA.target, before approach")
+                        DebugMSG(BTDATA.target)
+                     end,
+                     -- approach
+                     app.create_curved_approach_block_node(BTDATA.target, 0.20),
+                     function()
+                        DebugMSG("BTDATA.target, after approach")
+                        DebugMSG(BTDATA.target)
+                     end,
+                     -- place
+                     app.create_place_block_node(BTDATA.target, 0.20),
+                     -- backup
+                     app.create_timer_node{
+                        time = 0.08 / 0.005,
+                        func = function() api.move(-0.005, -0.005) end
+                     },
+                  },
+               },
+            },
+         },
+      },
    }
    behaviour = bt.create(bt_node)
    -- robot init ---

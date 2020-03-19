@@ -26,6 +26,7 @@
           show_frustum="true" show_tag_rays="false" show_led_rays="false" />
         <builderbot_rangefinders implementation="default"
           show_rays="false" />
+         <builderbot_system implementation="default" />
         <builderbot_differential_drive implementation="default" />
         <builderbot_electromagnet_system implementation="default" />
         <builderbot_lift_system implementation="default" />
@@ -54,7 +55,7 @@
                   label="di_srocs_loop_functions"
                   construction_site_min_corner="-0.5,-0.5"
                   construction_site_max_corner="0.5,0.5"
-                  blocks_in_foraging_area="10" />
+                  blocks_in_foraging_area="3" />
 
   <!-- *********************** -->
   <!-- * Arena configuration * -->
@@ -74,15 +75,30 @@
       <body position="-0.0125,1.4875,0"  orientation="0,0,0" />
     </box>
     <!-- add a fixed seed block -->
-    <block id="seed" movable="false">
+    <block id="block0" movable="false">
       <body position="0,0,0" orientation="0,0,0"/>
       <controller config="block"/>
     </block>
+    <!-- add three builderbots-->
+    <builderbot id="builderbot1" debug="false">
+      <body position="0.0,-0.2,0.0" orientation="90,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+
+   <builderbot id="builderbot2" debug="false">
+      <body position="0.4,0.2,0.0" orientation="180,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+   <builderbot id="builderbot3" debug="false">
+      <body position="-0.4,0.2,0.0" orientation="0,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+    
     <!-- distribute robots -->
     <distribute>
       <position method="uniform" min="-1.4,-1.4,0" max="1.4,1.4,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="10" max_trials="50">
+      <entity quantity="0" max_trials="50">
         <builderbot id="builderbot">
           <controller config="builderbot"/>
         </builderbot>
