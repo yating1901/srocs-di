@@ -52,10 +52,22 @@
   <!-- * Loop functions * -->
   <!-- ****************** -->
   <loop_functions library="@CMAKE_BINARY_DIR@/loop_functions/libdi_srocs_loop_functions"
-                  label="di_srocs_loop_functions"
-                  construction_site_min_corner="-0.5,-0.5"
-                  construction_site_max_corner="0.5,0.5"
-                  blocks_in_foraging_area="3" />
+                  label="di_srocs_loop_functions">
+    <condition type="entity" id="block0" position="0,0,0" threshold="0.005" once="true">
+      <action type="add_timer" id="timer1"/>
+    </condition>
+    <condition type="timer" id="timer1" value="50">
+      <action type="add_entity" delay="5">
+        <block id="block1" init_led_color="green">
+          <body position="0,0,0.25" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+      </action>
+    </condition>
+    <condition type="entity" id="block1" position="0,0,0.055" threshold="0.005" once="true">
+      <action type="terminate" delay="50"/>
+    </condition>
+  </loop_functions>
 
   <!-- *********************** -->
   <!-- * Arena configuration * -->
