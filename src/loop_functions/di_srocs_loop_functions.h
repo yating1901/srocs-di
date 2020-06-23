@@ -93,14 +93,17 @@ namespace argos {
                           bool b_once,
                           std::vector<std::shared_ptr<SAction> >&& vec_actions,
                           std::string&& str_entity_id,
+                          std::string&& str_entity_type,
                           const CVector3& c_position,
                           Real f_threshold = 0.0f) :
             SCondition(c_parent, b_once, std::move(vec_actions)),
             EntityId(std::move(str_entity_id)),
+            EntityType(std::move(str_entity_type)),
             Position(c_position),
             Threshold(f_threshold) {}
          virtual bool IsTrue() override;
          std::string EntityId;
+         std::string EntityType;
          CVector3 Position;
          Real Threshold;
       };
