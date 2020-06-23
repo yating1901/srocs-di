@@ -46,6 +46,15 @@ configure_file(
   COPYONLY)
 
 configure_file(
+  ${CMAKE_SOURCE_DIR}/experiment/block_controller.lua
+  ${CMAKE_BINARY_DIR}/experiment/block_controller.lua
+  COPYONLY)
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/experiment/block_usercode.lua
+  ${CMAKE_BINARY_DIR}/experiment/block_usercode.lua
+  COPYONLY)
+configure_file(
   ${CMAKE_SOURCE_DIR}/experiment/block.lua
   ${CMAKE_BINARY_DIR}/experiment/block.lua
   COPYONLY)
