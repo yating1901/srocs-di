@@ -79,14 +79,24 @@ namespace argos {
          GetNodeAttribute(*itCondition, "type", strConditionType);
          GetNodeAttributeOrDefault(*itCondition, "once", bOnce, bOnce);
          if(strConditionType == "entity") {
+            std::string strTarget;
             std::string strId;
+            std::string strType;
             CVector3 cPosition;
             Real fThreshold;
-            GetNodeAttribute(*itCondition, "id", strId);
+            GetNodeAttribute(*itCondition, "target", strTarget);
+            std::string::size_type nSeperator = strTarget.find(':');
+            if(nSeperator != std::string::npos) {
+               strType = std::move(strTarget.substr(0, nSeperator));
+               strId = std::move(strTarget.substr(nSeperator + 1));
+            }
+            else {
+               strId = std::move(strTarget);
+            }
             GetNodeAttribute(*itCondition, "position", cPosition);
             GetNodeAttribute(*itCondition, "threshold", fThreshold);
             std::unique_ptr<SEntityCondition> ptrEntityCondition =
-               std::make_unique<SEntityCondition>(*this, bOnce, std::move(vecActions), std::move(strId), cPosition, fThreshold);
+               std::make_unique<SEntityCondition>(*this, bOnce, std::move(vecActions), std::move(strId), std::move(strType), cPosition, fThreshold);
             m_vecConditions.emplace_back(std::move(ptrEntityCondition));
          }
          else if(strConditionType == "timer") {
@@ -175,15 +185,32 @@ namespace argos {
 
    bool CDISRoCSLoopFunctions::SEntityCondition::IsTrue() {
       try {
-         CEntity& cEntity = Parent.GetSpace().GetEntity(EntityId);
-         CComposableEntity* pcComposableEntity =
-            dynamic_cast<CComposableEntity*>(&cEntity);
-         if(pcComposableEntity != nullptr && pcComposableEntity->HasComponent("body")) {
-            CEmbodiedEntity& cEmbodiedEntity =
-               pcComposableEntity->GetComponent<CEmbodiedEntity>("body");
-            Real fDistance = 
-               Distance(Position, cEmbodiedEntity.GetOriginAnchor().Position);
-            return (fDistance < Threshold);
+         std::vector<CEntity*> vecCandidateEntities;
+         if(!EntityType.empty()) {
+            for(CEntity* pc_entity : Parent.GetSpace().GetRootEntityVector()) {
+               if(pc_entity->GetTypeDescription() == EntityType) {
+                  if(!EntityId.empty() && (pc_entity->GetId() != EntityId)) {
+                     continue;
+                  }
+                  vecCandidateEntities.push_back(pc_entity);
+               }
+            }
+         }
+         else {
+            vecCandidateEntities.push_back(&Parent.GetSpace().GetEntity(EntityId));
+         }
+         for(CEntity* pc_entity : vecCandidateEntities) {
+            CComposableEntity* pcComposableEntity =
+               dynamic_cast<CComposableEntity*>(pc_entity);
+            if(pcComposableEntity != nullptr && pcComposableEntity->HasComponent("body")) {
+               CEmbodiedEntity& cEmbodiedEntity =
+                  pcComposableEntity->GetComponent<CEmbodiedEntity>("body");
+               Real fDistance =
+                  Distance(Position, cEmbodiedEntity.GetOriginAnchor().Position);
+               if(fDistance < Threshold) {
+                  return true;
+               }
+            }
          }
       }
       catch(CARGoSException& ex) {}

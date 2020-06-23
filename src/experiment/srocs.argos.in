@@ -52,7 +52,11 @@
   <!-- ****************** -->
   <loop_functions library="@CMAKE_BINARY_DIR@/loop_functions/libdi_srocs_loop_functions"
                   label="di_srocs_loop_functions">
+<<<<<<< HEAD
     <condition type="entity" id="block1" position="0.055,0.2,0.0" threshold="0.005" once="true">
+=======
+    <condition type="entity" target="block:" position="0,0,0" threshold="0.005" once="true">
+>>>>>>> e11447180e3778ff9e982a407d3ad0e2b5eb7ca1
       <action type="add_timer" id="timer1"/>
     </condition>
     <condition type="timer" id="timer1" value="5">
@@ -81,8 +85,13 @@
         </block>
       </action>
     </condition>
+<<<<<<< HEAD
     <condition type="entity" id="block7" position="0.11,0.3,0.055" threshold="0.01" once="true">
       <action type="terminate" delay="10"/>
+=======
+    <condition type="entity" target="block1" position="0,0,0.055" threshold="0.005" once="true">
+      <action type="terminate" delay="50"/>
+>>>>>>> e11447180e3778ff9e982a407d3ad0e2b5eb7ca1
     </condition>
   </loop_functions>
 
