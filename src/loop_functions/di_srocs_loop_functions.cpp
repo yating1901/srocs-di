@@ -14,25 +14,6 @@ namespace argos {
    /****************************************/
 
    void CDISRoCSLoopFunctions::Init(TConfigurationNode& t_tree) {
-      /* create a map of the builderbot robots */
-      using TValueType = std::pair<const std::string, CAny>;
-      try {
-         for(TValueType& t_robot : GetSpace().GetEntitiesByType("builderbot")) {
-            m_vecRobots.push_back(any_cast<CBuilderBotEntity*>(t_robot.second));
-         }
-      }
-      catch(CARGoSException &ex) {
-         LOGERR << "[WARNING] No BuilderBots added to the simulation at initialization." << std::endl;
-      }
-      /* create a map of stigmergic blocks */
-      try {
-         for(TValueType& t_block : GetSpace().GetEntitiesByType("block")) {
-            m_vecBlocks.push_back(any_cast<CBlockEntity*>(t_block.second));
-         }
-      }
-      catch(CARGoSException &ex) {
-         LOGERR << "[WARNING] No Stigmergic Blocks added to the simulation at initialization." << std::endl;
-      }
       /* parse loop function configuration */
       TConfigurationNodeIterator itCondition("condition");
       for(itCondition = itCondition.begin(&t_tree);
@@ -127,6 +108,8 @@ namespace argos {
       m_bTerminate = false;
       /* clear map of timers */
       m_mapTimers.clear();
+      /* clear output streams */
+      m_mapOutputStreams.clear();
       /* reenable all conditions */
       for(std::unique_ptr<SCondition>& ptr_condition : m_vecConditions) {
          ptr_condition->Enabled = true;
@@ -156,7 +139,8 @@ namespace argos {
          }
       }
       /* execute actions for the current timestep */
-      std::pair<std::multimap<UInt32, std::shared_ptr<SAction> >::iterator, std::multimap<UInt32, std::shared_ptr<SAction> >::iterator> cActionRange =
+      std::pair<std::multimap<UInt32, std::shared_ptr<SAction> >::iterator,
+                std::multimap<UInt32, std::shared_ptr<SAction> >::iterator> cActionRange =
          m_mapPendingActions.equal_range(unClock);
       for(std::multimap<UInt32, std::shared_ptr<SAction> >::iterator itAction = cActionRange.first;
           itAction != cActionRange.second;
@@ -169,8 +153,53 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDISRoCSLoopFunctions::PostStep() {    
-      
+   void CDISRoCSLoopFunctions::PostStep() {
+      using TValueType = std::pair<const std::string, CAny>;
+      try {
+         for(TValueType& t_robot : GetSpace().GetEntitiesByType("builderbot")) {
+            CBuilderBotEntity* pcBuilderBot =
+               any_cast<CBuilderBotEntity*>(t_robot.second);
+            LogEmbodiedEntityToFile(t_robot.first, pcBuilderBot->GetEmbodiedEntity());
+         }
+      }
+      catch(CARGoSException &ex) {}
+      try {
+         for(TValueType& t_block : GetSpace().GetEntitiesByType("block")) {
+            CBlockEntity* pcBlock =
+               any_cast<CBlockEntity*>(t_block.second);
+            LogEmbodiedEntityToFile(t_block.first, pcBlock->GetEmbodiedEntity());
+         }
+      }
+      catch(CARGoSException &ex) {}
+   }
+
+   /****************************************/
+   /****************************************/
+
+   void CDISRoCSLoopFunctions::LogEmbodiedEntityToFile(const std::string& str_entity_id,
+                                                       const CEmbodiedEntity& c_embodied_entity) {
+      UInt32 unClock = GetSpace().GetSimulationClock();
+      std::map<std::string, std::ofstream>::iterator itOutputStream =
+         m_mapOutputStreams.find(str_entity_id);
+      if(itOutputStream == std::end(m_mapOutputStreams)) {
+         std::pair<std::map<std::string, std::ofstream>::iterator,bool> cResult =
+            m_mapOutputStreams.emplace(std::piecewise_construct,
+                                       std::forward_as_tuple(str_entity_id),
+                                       std::forward_as_tuple(str_entity_id + ".csv",
+                                                             std::ios_base::out |
+                                                             std::ios_base::trunc));
+         if(cResult.second) {
+            itOutputStream = cResult.first;
+         }
+         else {
+            THROW_ARGOSEXCEPTION("Could not insert output stream into map");
+         }
+      }
+      itOutputStream->second 
+         << unClock
+         << ","
+         << c_embodied_entity.GetOriginAnchor().Position
+         << std::endl;
    }
 
    /****************************************/
