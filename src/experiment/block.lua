@@ -8,6 +8,8 @@ function init()
    end
 end
 function step()
+   -- write a string and a number to the CSV
+   robot.debug.loop_functions(string.format("\"%s\", %d", "string", 0))
    for identifer, radio in pairs(robot.radios) do
       if #radio.rx_data > 0 then
          configuration = string.char(radio.rx_data[1][1])

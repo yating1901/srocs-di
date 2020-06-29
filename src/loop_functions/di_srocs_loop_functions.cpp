@@ -1,5 +1,6 @@
 #include "di_srocs_loop_functions.h"
 
+#include <argos3/plugins/simulator/entities/debug_entity.h>
 #include <argos3/plugins/simulator/entities/block_entity.h>
 #include <argos3/plugins/robots/builderbot/simulator/builderbot_entity.h>
 
@@ -159,7 +160,9 @@ namespace argos {
          for(TValueType& t_robot : GetSpace().GetEntitiesByType("builderbot")) {
             CBuilderBotEntity* pcBuilderBot =
                any_cast<CBuilderBotEntity*>(t_robot.second);
-            LogEmbodiedEntityToFile(t_robot.first, pcBuilderBot->GetEmbodiedEntity());
+            LogEntityToFile(t_robot.first,
+                            pcBuilderBot->GetEmbodiedEntity(),
+                            pcBuilderBot->GetDebugEntity());
          }
       }
       catch(CARGoSException &ex) {}
@@ -167,7 +170,9 @@ namespace argos {
          for(TValueType& t_block : GetSpace().GetEntitiesByType("block")) {
             CBlockEntity* pcBlock =
                any_cast<CBlockEntity*>(t_block.second);
-            LogEmbodiedEntityToFile(t_block.first, pcBlock->GetEmbodiedEntity());
+            LogEntityToFile(t_block.first,
+                            pcBlock->GetEmbodiedEntity(),
+                            pcBlock->GetDebugEntity());
          }
       }
       catch(CARGoSException &ex) {}
@@ -176,13 +181,14 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDISRoCSLoopFunctions::LogEmbodiedEntityToFile(const std::string& str_entity_id,
-                                                       const CEmbodiedEntity& c_embodied_entity) {
+   void CDISRoCSLoopFunctions::LogEntityToFile(const std::string& str_entity_id,
+                                               const CEmbodiedEntity& c_embodied_entity,
+                                               const CDebugEntity& c_debug_entity) {
       UInt32 unClock = GetSpace().GetSimulationClock();
       std::map<std::string, std::ofstream>::iterator itOutputStream =
          m_mapOutputStreams.find(str_entity_id);
       if(itOutputStream == std::end(m_mapOutputStreams)) {
-         std::pair<std::map<std::string, std::ofstream>::iterator,bool> cResult =
+         std::pair<std::map<std::string, std::ofstream>::iterator, bool> cResult =
             m_mapOutputStreams.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(str_entity_id),
                                        std::forward_as_tuple(str_entity_id + ".csv",
@@ -195,10 +201,16 @@ namespace argos {
             THROW_ARGOSEXCEPTION("Could not insert output stream into map");
          }
       }
+      std::string strOutputBuffer(c_debug_entity.GetBuffer("loop_functions"));
+      std::string::iterator itRemove =
+         std::remove(std::begin(strOutputBuffer), std::end(strOutputBuffer), '\n');
+      strOutputBuffer.erase(itRemove, std::end(strOutputBuffer));
       itOutputStream->second 
          << unClock
          << ","
          << c_embodied_entity.GetOriginAnchor().Position
+         << ","
+         << strOutputBuffer
          << std::endl;
    }
 

@@ -4,6 +4,8 @@
 namespace argos {
    class CBlockEntity;
    class CBuilderBotEntity;
+   class CEmbodiedEntity;
+   class CDebugEntity;
 }
 
 #include <argos3/core/simulator/space/space.h>
@@ -34,8 +36,9 @@ namespace argos {
 
    private:
 
-      void LogEmbodiedEntityToFile(const std::string& str_entity_id,
-                                   const CEmbodiedEntity& c_entity);
+      void LogEntityToFile(const std::string& str_entity_id,
+                           const CEmbodiedEntity& c_entity,
+                           const CDebugEntity& c_debug_entity);
 
       struct SAction {
          SAction(CDISRoCSLoopFunctions& c_parent,

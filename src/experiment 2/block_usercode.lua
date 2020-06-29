@@ -236,7 +236,8 @@ end
 
 -- step method --
 function user_code.step(time)
-  
+   -- write some data to the CSV
+   robot.debug.loop_functions(string.format("\"%s\",\"%s\"", robot.id, robot.isroot))
    for identifier, radio in pairs(robot.radios) do
       if robot.blockstate == "Idle" then
          if radio.role == "target" and #radio.rx_data > 0 then
