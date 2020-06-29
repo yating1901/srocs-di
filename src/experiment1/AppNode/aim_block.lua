@@ -33,10 +33,10 @@ local create_aim_block_node = function(target, aim_point)
          if target_height > upper_limit then target_height = upper_limit end
          if robot.lift_system.position > target_height - tolerance and 
             robot.lift_system.position < target_height + tolerance then
-            --DebugMSG("camera in position")
+            DebugMSG("camera in position")
             flag_camera = true
          else
-            --DebugMSG("camera not in position")
+            DebugMSG("camera not in position")
             robot.lift_system.set_position(target_height)
             flag_camera = false
          end
@@ -78,7 +78,7 @@ local create_aim_block_node = function(target, aim_point)
                flag_orientation = false
             else
                turn = "no"
-               --DebugMSG("robot in right orientation")
+               DebugMSG("robot in right orientation")
                flag_orientation = true
             end
          end

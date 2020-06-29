@@ -1,0 +1,234 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+  <!-- ************************* -->
+  <!-- * General configuration * -->
+  <!-- ************************* -->
+  <framework>
+    <system threads="0" />
+    <experiment length="0" ticks_per_second="5" random_seed="12345" />
+  </framework>
+  
+  <!-- *************** -->
+  <!-- * Controllers * -->
+  <!-- *************** -->
+  <controllers>
+    <lua_controller id="builderbot">
+      <actuators>
+        <builderbot_electromagnet_system implementation="default" />
+        <builderbot_differential_drive implementation="default" />
+        <builderbot_lift_system implementation="default" />
+        <builderbot_nfc implementation="default" />
+        <wifi implementation="default" />
+      </actuators>
+      <sensors>
+        <builderbot_camera_system implementation="default"
+          show_frustum="false" show_tag_rays="false" show_led_rays="false" />
+        <builderbot_rangefinders implementation="default" show_rays="false" />
+         <builderbot_system implementation="default" />
+        <builderbot_differential_drive implementation="default" />
+        <builderbot_electromagnet_system implementation="default" />
+        <builderbot_lift_system implementation="default" />
+        <builderbot_nfc implementation="default" show_rays="false" />
+        <wifi implementation="default" show_rays="false" />
+      </sensors>
+      <params script="@CMAKE_BINARY_DIR@/experiment/builderbot.lua" rules="rules" />
+    </lua_controller>
+
+    <lua_controller id="block">
+      <actuators>
+        <directional_leds implementation="default" />
+        <radios implementation="default"/>
+      </actuators>
+      <sensors>
+        <radios implementation="default" show_rays="false"/>
+      </sensors>
+      <params script="@CMAKE_BINARY_DIR@/experiment/block_controller.lua" />
+    </lua_controller>
+  </controllers>
+
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="@CMAKE_BINARY_DIR@/loop_functions/libdi_srocs_loop_functions"
+                  label="di_srocs_loop_functions">
+    <condition type="entity" id="block1" position="0.055,0.2,0.0" threshold="0.005" once="true">
+      <action type="add_timer" id="timer1"/>
+    </condition>
+    <condition type="timer" id="timer1" value="5">
+      <action type="add_entity" delay="5">
+        <block id="block10" init_led_color="black">
+          <body position="-0.2,-0.1,0.0" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+        </action>
+        <action type="add_entity" delay="6">
+        <block id="block11" init_led_color="black">
+          <body position="0.2,-0.1,0.0" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+        </action>
+        <action type="add_entity" delay="5">
+        <block id="block12" init_led_color="black">
+          <body position="0.2,0.1,0.0" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+        </action>
+        <action type="add_entity" delay="5">
+        <block id="block13" init_led_color="black">
+          <body position="-0.2,0.3,0.0" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+      </action>
+    </condition>
+    <condition type="entity" id="block7" position="0.11,0.3,0.055" threshold="0.01" once="true">
+      <action type="terminate" delay="10"/>
+    </condition>
+  </loop_functions>
+
+  <!-- *********************** -->
+  <!-- * Arena configuration * -->
+  <!-- *********************** -->
+   <arena size="3, 3, 2" center="0, 0, 0.5">
+    <box id="bn" size="0.025,2,0.055" movable="false" mass="10">
+      <body position="1,0.0125,0" orientation="0,0,0" />
+    </box>
+    <box id="be" size="2,0.025,0.055" movable="false" mass="10">
+      <body position="0.0125,-1.0,0" orientation="0,0,0" />
+    </box>
+    <box id="bs" size="0.025,2,0.055" movable="false" mass="10">
+      <body position="-1,-0.0125,0" orientation="0,0,0" />
+    </box>
+    <box id="bw" size="2,0.025,0.055" movable="false" mass="10">
+      <body position="-0.0125,1,0" orientation="0,0,0" />
+    </box>
+    <!-- add a fixed seed block -->
+    <block id="block0" debug="false" movable="false">
+      <body position="-0.005,0.2,0.0" orientation="90,0,0"/>
+      <controller config="block"/>
+    </block>
+    <block id="block1" debug="false" movable="true">
+      <body position="0.305,0.2,0.010" orientation="0,0,0"/>
+      <controller config="block"/>
+    </block>
+    <block id="block2" debug="false" movable="true">
+      <body position="0.0,-0.105,0.010" orientation="0,0,0"/>
+      <controller config="block"/>
+    </block>
+    <block id="block3" debug="false" movable="true">
+      <body position="-0.305,0.2,0.010" orientation="0,0,0"/>
+      <controller config="block"/>
+    </block>
+    <block id="block4" debug="false" movable="true">
+      <body position="0.0,0.505,0.010" orientation="0,0,0"/>
+      <controller config="block"/>
+    </block>
+    <!-- add three builderbots-->
+    <builderbot id="builderbot1" debug="false">
+      <body position="0.0,-0.2,0.0" orientation="90,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+   <builderbot id="builderbot2" debug="false">
+      <body position="0.4,0.2,0.0" orientation="180,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+   <builderbot id="builderbot3" debug="false">
+      <body position="-0.4,0.2,0.0" orientation="0,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+    <builderbot id="builderbot4" debug="false">
+      <body position="0.0,0.6,0.0" orientation="270,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+    <!-- distribute robots -->
+    <distribute>
+      <position method="uniform" min="-1.4,-1.4,0" max="1.4,1.4,0" />
+      <orientation method="uniform" min="0,0,0" max="360,0,0" />
+      <entity quantity="0" max_trials="50">
+        <builderbot id="builderbot">
+          <controller config="builderbot"/>
+        </builderbot>
+      </entity>
+    </distribute>
+  </arena>
+
+  <!-- ******************* -->
+  <!-- * Physics engines * -->
+  <!-- ******************* -->
+  <physics_engines>
+    <dynamics3d id="dyn3d" iterations="25" default_friction="1">
+      <gravity g="9.8" />
+       <floor height="0.01" friction="1"/>
+      <virtual_magnetism />
+    </dynamics3d>
+  </physics_engines>
+
+  <!-- ********* -->
+  <!-- * Media * -->
+  <!-- ********* -->
+  <media>
+    <directional_led id="directional_leds" index="grid" grid_size="20,20,20"/>
+    <tag id="tags" index="grid" grid_size="20,20,20" />
+    <radio id="nfc" index="grid" grid_size="20,20,20" />
+    <radio id="wifi" index="grid" grid_size="20,20,20" />
+  </media>
+
+  <!-- ****************** -->
+  <!-- * Visualization * -->
+  <!-- ****************** -->
+
+  <visualization>
+    <qt-opengl lua_editor="false" show_boundary="false">
+      <user_functions library="@CMAKE_BINARY_DIR@/qtopengl_user_functions/libdi_qtopengl_user_functions" label="di_qtopengl_user_functions">
+        <frame_grabbing directory="@CMAKE_BINARY_DIR@/inert_block_01" base_name="image_" format="png" />
+        <camera_paths use_camera="0">
+            <path duration="250">
+              <start position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+              <end position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+            </path>
+            <path duration="250">
+              <start position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+              <end position=" 2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+            </path>
+            <path duration="250">
+              <start position=" 2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+              <end position=" 2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+            </path>
+            <path duration="250">
+              <start position=" 2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+              <end position=" 0,   2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+            </path>
+            <path duration="250">
+              <start position=" 0,   2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+              <end position="-2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+            </path>
+            <path duration="250">
+              <start position="-2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+              <end position="-2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+            </path>
+            <path duration="250">
+              <start position="-2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+              <end position="-2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+            </path>
+            <path duration="250">
+              <start position="-2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+              <end position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+            </path>
+         </camera_paths>
+      </user_functions>
+      <camera>
+        <placement idx="0" position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+        <placement idx="1" position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+        <placement idx="2" position=" 2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+        <placement idx="3" position=" 2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+        <placement idx="4" position=" 0,   2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
+        <placement idx="5" position="-2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+        <placement idx="6" position="-2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
+        <placement idx="7" position="-2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
+        <placement idx="8" position="0,0,0.5" look_at="0.0,0.0,0.125" up="1,0,0" lens_focal_length="40" />
+      </camera>
+    </qt-opengl>
+  </visualization>
+
+
+</argos-configuration>
