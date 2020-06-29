@@ -95,9 +95,7 @@ namespace argos {
    /********************************************************************************/
    /********************************************************************************/
 
-   CDIQtOpenGLUserFunctions::CDIQtOpenGLUserFunctions() :
-      m_unCameraIndex(0),
-      m_unLastSimulationClock(-1) {
+   CDIQtOpenGLUserFunctions::CDIQtOpenGLUserFunctions() {
       RegisterUserFunction<CDIQtOpenGLUserFunctions, CBuilderBotEntity>(&CDIQtOpenGLUserFunctions::Annotate);
       RegisterUserFunction<CDIQtOpenGLUserFunctions, CPiPuckEntity>(&CDIQtOpenGLUserFunctions::Annotate);
       RegisterUserFunction<CDIQtOpenGLUserFunctions, CDroneEntity>(&CDIQtOpenGLUserFunctions::Annotate);
@@ -116,101 +114,6 @@ namespace argos {
       m_pcMouseWheelEventHandler =
          new CDIQtOpenGLUserFunctionsMouseWheelEventHandler(&GetQTOpenGLWidget(), this);
       GetQTOpenGLWidget().installEventFilter(m_pcMouseWheelEventHandler);
-      /* set up the camera paths */
-      if(NodeExists(t_tree, "camera_paths")) {
-         TConfigurationNode& tCameraPaths = GetNode(t_tree, "camera_paths");
-         GetNodeAttribute(tCameraPaths, "use_camera", m_unCameraIndex);
-         if(m_unCameraIndex > 11) {
-            THROW_ARGOSEXCEPTION("use_camera must be in the range [0:11].");
-         }
-         TConfigurationNodeIterator itPath("path");
-         UInt32 unDuration, unStartFocalLength, unEndFocalLength;
-         CVector3 cStartPosition, cEndPosition, cStartLookAt, cEndLookAt, cStartUp, cEndUp;
-         for(itPath = itPath.begin(&tCameraPaths); itPath != itPath.end(); ++itPath) {
-            GetNodeAttribute(*itPath, "duration", unDuration);
-            TConfigurationNode tStartNode = GetNode(*itPath, "start");
-            GetNodeAttribute(tStartNode, "position", cStartPosition);
-            GetNodeAttribute(tStartNode, "look_at", cStartLookAt);
-            GetNodeAttributeOrDefault(tStartNode, "up", cStartUp, cStartUp);
-            GetNodeAttribute(tStartNode, "lens_focal_length", unStartFocalLength);
-            TConfigurationNode tEndNode = GetNode(*itPath, "end");
-            GetNodeAttribute(tEndNode, "position", cEndPosition);
-            GetNodeAttribute(tEndNode, "look_at", cEndLookAt);
-            GetNodeAttributeOrDefault(tEndNode, "up", cEndUp, cEndUp);
-            GetNodeAttribute(tEndNode, "lens_focal_length", unEndFocalLength);
-            m_vecCameraPaths.emplace_back(unDuration,
-                                          unStartFocalLength,
-                                          unEndFocalLength,
-                                          cStartPosition,
-                                          cEndPosition,
-                                          cStartLookAt,
-                                          cEndLookAt,
-                                          cStartUp,
-                                          cEndUp);
-         }
-      }
-   }
-
-
-
-   /********************************************************************************/
-   /********************************************************************************/
-
-   void CDIQtOpenGLUserFunctions::DrawInWorld() {
-      UInt32 unSimulationClock = CSimulator::GetInstance().GetSpace().GetSimulationClock();
-      if(m_unLastSimulationClock != unSimulationClock) {
-         m_unLastSimulationClock = unSimulationClock;
-         /* get camera settings */
-         CQTOpenGLCamera::SSettings& sSettings = 
-            GetQTOpenGLWidget().GetCamera().GetSetting(m_unCameraIndex);
-         /* find current camera path */
-         UInt32 unPreviousPathDurations = 0;
-         for(const SCameraPath& s_camera_path : m_vecCameraPaths) {
-            if(unPreviousPathDurations + s_camera_path.Duration < unSimulationClock) {
-               unPreviousPathDurations += s_camera_path.Duration;
-            }
-            else {
-               Real fPathTimeFraction =
-                  static_cast<Real>(unSimulationClock - unPreviousPathDurations) /
-                  static_cast<Real>(s_camera_path.Duration);
-               CVector3 cPosition(s_camera_path.EndPosition - s_camera_path.StartPosition);
-               cPosition *= fPathTimeFraction;
-               cPosition += s_camera_path.StartPosition;
-               CVector3 cLookAt(s_camera_path.EndLookAt - s_camera_path.StartLookAt);
-               cLookAt *= fPathTimeFraction;
-               cLookAt += s_camera_path.StartLookAt;
-               CVector3 cUp(s_camera_path.EndUp - s_camera_path.StartUp);
-               cUp *= fPathTimeFraction;
-               cUp += s_camera_path.StartUp;
-               sSettings.Position = cPosition;
-               sSettings.Target = cLookAt;
-               sSettings.Forward = 
-                  (sSettings.Target - sSettings.Position).Normalize();
-               if(cUp == CVector3::ZERO) {
-                  if(sSettings.Forward.GetX() != 0 || sSettings.Forward.GetY() != 0) {
-                     CVector2 cLeftXY(sSettings.Forward.GetX(), sSettings.Forward.GetY());
-                     cLeftXY.Perpendicularize();
-                     sSettings.Left.Set(cLeftXY.GetX(), cLeftXY.GetY(), 0.0f);
-                     sSettings.Left.Normalize();
-                  }
-                  else {
-                     sSettings.Left.Set(0.0f, 1.0f, 0.0f);
-                  }
-                  /* Calculate the Up vector with a cross product */
-                  sSettings.Up = sSettings.Forward;
-                  sSettings.Up.CrossProduct(sSettings.Left).Normalize();
-               }
-               else {
-                  sSettings.Up = cUp;
-                  sSettings.Up.Normalize();
-                  /* Calculate the Left vector with a cross product */
-                  sSettings.Left = sSettings.Up;
-                  sSettings.Left.CrossProduct(sSettings.Forward).Normalize();
-               }
-               break;
-            }
-         }
-      }
    }
 
    /********************************************************************************/

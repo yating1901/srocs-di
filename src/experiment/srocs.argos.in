@@ -145,42 +145,7 @@
 
   <visualization>
     <qt-opengl lua_editor="false" show_boundary="false">
-      <user_functions library="@CMAKE_BINARY_DIR@/qtopengl_user_functions/libdi_qtopengl_user_functions" label="di_qtopengl_user_functions">
-        <camera_paths use_camera="0">
-            <path duration="250">
-              <start position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
-              <end position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-            </path>
-            <path duration="250">
-              <start position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-              <end position=" 2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
-            </path>
-            <path duration="250">
-              <start position=" 2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
-              <end position=" 2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-            </path>
-            <path duration="250">
-              <start position=" 2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-              <end position=" 0,   2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
-            </path>
-            <path duration="250">
-              <start position=" 0,   2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
-              <end position="-2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-            </path>
-            <path duration="250">
-              <start position="-2.5, 2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-              <end position="-2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
-            </path>
-            <path duration="250">
-              <start position="-2.5, 0,  1" look_at="0,0,0.05" lens_focal_length="78" />
-              <end position="-2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-            </path>
-            <path duration="250">
-              <start position="-2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
-              <end position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
-            </path>
-         </camera_paths>
-      </user_functions>
+      <user_functions library="@CMAKE_BINARY_DIR@/qtopengl_user_functions/libdi_qtopengl_user_functions" label="di_qtopengl_user_functions"/>
       <camera>
         <placement idx="0" position=" 0,  -2.5,1" look_at="0,0,0.05" lens_focal_length="78" />
         <placement idx="1" position=" 2.5,-2.5,1" look_at="0,0,0.05" lens_focal_length="92" />
