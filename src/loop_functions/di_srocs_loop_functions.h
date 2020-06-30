@@ -4,6 +4,8 @@
 namespace argos {
    class CBlockEntity;
    class CBuilderBotEntity;
+   class CEmbodiedEntity;
+   class CDebugEntity;
 }
 
 #include <argos3/core/simulator/space/space.h>
@@ -26,8 +28,6 @@ namespace argos {
 
       virtual void Reset() override;
 
-      //virtual void Destroy();
-
       virtual void PreStep() override;
 
       virtual void PostStep() override;
@@ -35,6 +35,10 @@ namespace argos {
       virtual bool IsExperimentFinished() override;
 
    private:
+
+      void LogEntityToFile(const std::string& str_entity_id,
+                           const CEmbodiedEntity& c_entity,
+                           const CDebugEntity& c_debug_entity);
 
       struct SAction {
          SAction(CDISRoCSLoopFunctions& c_parent,
@@ -126,14 +130,10 @@ namespace argos {
       std::multimap<UInt32, std::shared_ptr<SAction> > m_mapPendingActions;
       std::vector<CEntity*> m_vecAddedEntities;
 
-      std::vector<CBuilderBotEntity*> m_vecRobots;
-      std::vector<CBlockEntity*> m_vecBlocks;
-
       std::map<std::string, UInt32> m_mapTimers;
+      std::map<std::string, std::ofstream> m_mapOutputStreams;
 
       bool m_bTerminate = false;
-
-
 
    };
 

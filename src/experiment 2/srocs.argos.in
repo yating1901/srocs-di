@@ -20,6 +20,10 @@
         <builderbot_lift_system implementation="default" />
         <builderbot_nfc implementation="default" />
         <wifi implementation="default" />
+        <debug implementation="default">
+          <interface id="draw" />
+          <interface id="loop_functions" />
+        </debug>
       </actuators>
       <sensors>
         <builderbot_camera_system implementation="default"
@@ -39,6 +43,10 @@
       <actuators>
         <directional_leds implementation="default" />
         <radios implementation="default"/>
+        <debug implementation="default">
+          <interface id="draw" />
+          <interface id="loop_functions" />
+        </debug>
       </actuators>
       <sensors>
         <radios implementation="default" show_rays="false"/>
