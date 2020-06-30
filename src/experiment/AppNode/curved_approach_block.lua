@@ -13,7 +13,7 @@ local create_curved_approach_block_node = function(target, target_distance)
    type = "sequence",
    children = {
       -- obstacle_avoidance
-      --create_obstacle_avoidance_node(),
+      create_obstacle_avoidance_node(),
       -- check the target block is still there 
       function()
          if target == nil or 
@@ -73,7 +73,7 @@ local create_curved_approach_block_node = function(target, target_distance)
          local target_block = api.blocks[target.reference_id]
          local tolerence = api.parameters.block_position_tolerance
          local default_speed = api.parameters.default_speed
-         DebugMSG("create_aim_block_node")
+
          DebugMSG(case)
 
          if case.forward_backup_case == 1 then
@@ -99,10 +99,7 @@ local create_curved_approach_block_node = function(target, target_distance)
             --if target_block.position_robot.x < target_distance + 0.03 + tolerence then
             if target_block.position_robot.x < target_distance + 0.04 then
                -- too close, keep move backward
-               DebugMSG("too close, backward")
                api.move(-default_speed, -default_speed)
-               DebugMSG('position_robot_x:',target_block.position_robot.x)
-               DebugMSG('target_distance:',target_distance)
                return true
             else
                -- far enough, forward again

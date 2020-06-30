@@ -123,7 +123,7 @@
       <body position="0.0,0.505,0.010" orientation="0,0,0"/>
       <controller config="block"/>
     </block>
-    <!-- add three builderbots-->
+    <!-- add four builderbots-->
     <builderbot id="builderbot1" debug="false">
       <body position="0.0,-0.2,0.0" orientation="90,0,0"/>
       <controller config="builderbot"/>

@@ -213,7 +213,7 @@ builderbot_api.subprocess_leds = function()
          if block.tags.up.type == 4 and block.tags.front.type == 4 then
             block.type = 4
         end        
-      end       --]]
+      end       
       DebugMSG(i,'block_type:',block.type)
    end
 end
