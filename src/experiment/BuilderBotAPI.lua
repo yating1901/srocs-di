@@ -188,17 +188,20 @@ builderbot_api.subprocess_leds = function()
         end      
       end       ]]--
       if block.tags.up ~= nil then  --
+         if block.tags.up.type == 3 then
+            block.type = 1
+         end
          if block.tags.up.type == 0 then
              block.type = 0
          end
          if block.tags.up.type == 2 then  --orange
              block.type = 3               --put one above
          end
-         if block.tags.up.type == 3 then  
-            block.type = 1              
-         end
       end
       if block.tags.front ~= nil then
+         if block.tags.front.type == 3 then
+            block.type = 1
+         end
          if block.tags.front.type == 0 then
              block.type = 0
          end

@@ -339,9 +339,9 @@ local create_process_rules_node = function(rules, rule_type, final_target)
             return count
          end
          structure_matching_result = true
-         if tablelength(visible_structure) ~= #rule_structure then  -- need to be comment with the intelligence of block
-            structure_matching_result = false  		 	--
-         else							--
+         --if tablelength(visible_structure) ~= #rule_structure then  -- need to be comment with the intelligence of block
+          --  structure_matching_result = false  		 	--
+         --else							--
             for j, rule_block in pairs(rule_structure) do
                block_matched = false
                for k, visible_block in pairs(visible_structure) do
@@ -362,7 +362,7 @@ DebugMSG("matched!")
                   break
                end
             end
-         end							--
+         --end							--
          return structure_matching_result
       end
       function get_reference_id_from_index(reference_index, visible_structure)
