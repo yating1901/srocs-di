@@ -36,10 +36,6 @@ namespace argos {
 
    private:
 
-      void LogEntityToFile(const std::string& str_entity_id,
-                           const CEmbodiedEntity& c_entity,
-                           const CDebugEntity& c_debug_entity);
-
       struct SAction {
          SAction(CDISRoCSLoopFunctions& c_parent,
                  UInt32 un_delay) :
@@ -49,6 +45,33 @@ namespace argos {
          CDISRoCSLoopFunctions& Parent;
          const UInt32 Delay = 0;
       };
+
+      struct SCondition {
+         SCondition(CDISRoCSLoopFunctions& c_parent,
+                    bool b_once,
+                    std::vector<std::shared_ptr<SAction> >&& vec_actions) :
+            Parent(c_parent),
+            Once(b_once),
+            Enabled(true),
+            Actions(std::move(vec_actions)) {}
+         virtual bool IsTrue() = 0;
+         CDISRoCSLoopFunctions& Parent;
+         bool Once;
+         bool Enabled;
+         std::vector<std::shared_ptr<SAction> > Actions;
+      };
+
+   private:
+
+      std::unique_ptr<SCondition> ParseCondition(TConfigurationNode& t_tree);
+
+      std::shared_ptr<SAction> ParseAction(TConfigurationNode& t_tree);
+
+      void LogEntityToFile(const std::string& str_entity_id,
+                           const CEmbodiedEntity& c_entity,
+                           const CDebugEntity& c_debug_entity);
+
+   private:
 
       struct SAddEntityAction : SAction {
          SAddEntityAction(CDISRoCSLoopFunctions& c_parent,
@@ -65,7 +88,7 @@ namespace argos {
                          UInt32 un_delay,
                          std::string&& str_timer_id) :
             SAction(c_parent, un_delay),
-            TimerId(str_timer_id) {}
+            TimerId(std::move(str_timer_id)) {}
          virtual void Execute() override;
          std::string TimerId;
       };
@@ -77,19 +100,26 @@ namespace argos {
          virtual void Execute() override;
       };
 
-      struct SCondition {
-         SCondition(CDISRoCSLoopFunctions& c_parent,
-                    bool b_once,
-                    std::vector<std::shared_ptr<SAction> >&& vec_actions) :
-            Parent(c_parent),
-            Once(b_once),
-            Enabled(true),
-            Actions(std::move(vec_actions)) {}
-         virtual bool IsTrue() = 0;
-         CDISRoCSLoopFunctions& Parent;
-         bool Once;
-         bool Enabled;
-         std::vector<std::shared_ptr<SAction> > Actions;
+      struct SAnyCondition : SCondition {
+         SAnyCondition(CDISRoCSLoopFunctions& c_parent,
+                       bool b_once,
+                       std::vector<std::shared_ptr<SAction> >&& vec_actions,
+                       std::vector<std::unique_ptr<SCondition> >&& vec_conditions) :
+            SCondition(c_parent, b_once, std::move(vec_actions)),
+            Conditions(std::move(vec_conditions)) {}
+         virtual bool IsTrue() override;
+         std::vector<std::unique_ptr<SCondition> > Conditions;
+      };
+
+      struct SAllCondition : SCondition {
+         SAllCondition(CDISRoCSLoopFunctions& c_parent,
+                       bool b_once,
+                       std::vector<std::shared_ptr<SAction> >&& vec_actions,
+                       std::vector<std::unique_ptr<SCondition> >&& vec_conditions) :
+            SCondition(c_parent, b_once, std::move(vec_actions)),
+            Conditions(std::move(vec_conditions)) {}
+         virtual bool IsTrue() override;
+         std::vector<std::unique_ptr<SCondition> > Conditions;
       };
 
       struct SEntityCondition : SCondition {
@@ -119,7 +149,7 @@ namespace argos {
                          std::string&& str_timer_id,
                          UInt32 un_value) :
             SCondition(c_parent, b_once, std::move(vec_actions)),
-            TimerId(std::move(str_timer_id)),
+            TimerId(str_timer_id),
             Value(un_value) {}
          virtual bool IsTrue() override;
          std::string TimerId;

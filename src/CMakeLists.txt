@@ -41,6 +41,10 @@ configure_file(
   ${CMAKE_BINARY_DIR}/experiment/srocs.argos)
 
 configure_file(
+  ${CMAKE_SOURCE_DIR}/experiment/test_loop_functions.argos.in
+  ${CMAKE_BINARY_DIR}/experiment/test_loop_functions.argos)
+
+configure_file(
   ${CMAKE_SOURCE_DIR}/experiment/builderbot.lua
   ${CMAKE_BINARY_DIR}/experiment/builderbot.lua
   COPYONLY)

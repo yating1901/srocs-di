@@ -20,79 +20,8 @@ namespace argos {
       for(itCondition = itCondition.begin(&t_tree);
           itCondition != itCondition.end();
           ++itCondition) {
-         /* parse the actions */
-         std::vector<std::shared_ptr<SAction> > vecActions;
-         TConfigurationNodeIterator itAction("action");
-         for(itAction = itAction.begin(&(*itCondition));
-             itAction != itAction.end();
-             ++itAction) {
-            std::string strActionType;
-            UInt32 unDelay = 0;
-            GetNodeAttribute(*itAction, "type", strActionType);
-            GetNodeAttributeOrDefault(*itAction, "delay", unDelay, unDelay);
-            if(strActionType == "add_timer") {
-               std::string strId;
-               GetNodeAttribute(*itAction, "id", strId);
-               std::shared_ptr<SAddTimerAction> ptrTimerAction =
-                  std::make_shared<SAddTimerAction>(*this, unDelay, std::move(strId));
-               vecActions.emplace_back(std::move(ptrTimerAction));
-            }
-            else if(strActionType == "add_entity") {
-               TConfigurationNodeIterator itEntity;
-               for(itEntity = itEntity.begin(&(*itAction));
-                   itEntity != itEntity.end();
-                   ++itEntity) {
-                  std::shared_ptr<SAddEntityAction> ptrEntityAction =
-                     std::make_shared<SAddEntityAction>(*this, unDelay, *itEntity);
-                  vecActions.emplace_back(std::move(ptrEntityAction));
-               }
-            }
-            else if(strActionType == "terminate") {
-               std::shared_ptr<STerminateAction> ptrTerminateAction =
-                  std::make_shared<STerminateAction>(*this, unDelay);
-               vecActions.emplace_back(std::move(ptrTerminateAction));
-            }
-            else {
-               THROW_ARGOSEXCEPTION("Loop function action type \"" << strActionType << "\" not implemented.");
-            }
-         }
-         std::string strConditionType;
-         bool bOnce = false;
-         GetNodeAttribute(*itCondition, "type", strConditionType);
-         GetNodeAttributeOrDefault(*itCondition, "once", bOnce, bOnce);
-         if(strConditionType == "entity") {
-            std::string strTarget;
-            std::string strId;
-            std::string strType;
-            CVector3 cPosition;
-            Real fThreshold;
-            GetNodeAttribute(*itCondition, "target", strTarget);
-            std::string::size_type nSeperator = strTarget.find(':');
-            if(nSeperator != std::string::npos) {
-               strType = std::move(strTarget.substr(0, nSeperator));
-               strId = std::move(strTarget.substr(nSeperator + 1));
-            }
-            else {
-               strId = std::move(strTarget);
-            }
-            GetNodeAttribute(*itCondition, "position", cPosition);
-            GetNodeAttribute(*itCondition, "threshold", fThreshold);
-            std::unique_ptr<SEntityCondition> ptrEntityCondition =
-               std::make_unique<SEntityCondition>(*this, bOnce, std::move(vecActions), std::move(strId), std::move(strType), cPosition, fThreshold);
-            m_vecConditions.emplace_back(std::move(ptrEntityCondition));
-         }
-         else if(strConditionType == "timer") {
-            std::string strId;
-            UInt32 unValue;
-            GetNodeAttribute(*itCondition, "id", strId);
-            GetNodeAttribute(*itCondition, "value", unValue);
-            std::unique_ptr<STimerCondition> ptrTimerCondition =
-               std::make_unique<STimerCondition>(*this, bOnce, std::move(vecActions), std::move(strId), unValue);
-            m_vecConditions.emplace_back(std::move(ptrTimerCondition));
-         }
-         else {
-            THROW_ARGOSEXCEPTION("Loop function condition type \"" << strConditionType << "\" not implemented.");
-         }
+         /* parse the condition */
+         m_vecConditions.emplace_back(ParseCondition(*itCondition));
       }
    }
 
@@ -114,8 +43,7 @@ namespace argos {
       /* reenable all conditions */
       for(std::unique_ptr<SCondition>& ptr_condition : m_vecConditions) {
          ptr_condition->Enabled = true;
-      }
-      
+      }     
    }
 
    /****************************************/
@@ -177,6 +105,128 @@ namespace argos {
       }
       catch(CARGoSException &ex) {}
    }
+   
+   /****************************************/
+   /****************************************/
+
+   bool CDISRoCSLoopFunctions::IsExperimentFinished() {
+      return m_bTerminate;
+   }
+
+   /****************************************/
+   /****************************************/
+   
+   std::unique_ptr<CDISRoCSLoopFunctions::SCondition>
+      CDISRoCSLoopFunctions::ParseCondition(TConfigurationNode& t_tree) {
+      std::vector<std::shared_ptr<SAction> > vecActions;
+      TConfigurationNodeIterator itAction("action");
+      for(itAction = itAction.begin(&t_tree);
+          itAction != itAction.end();
+          ++itAction) {
+         vecActions.emplace_back(ParseAction(*itAction));
+      }
+      std::string strConditionType;
+      bool bOnce = false;
+      GetNodeAttribute(t_tree, "type", strConditionType);
+      GetNodeAttributeOrDefault(t_tree, "once", bOnce, bOnce);
+      if(strConditionType == "all") {
+         std::vector<std::unique_ptr<SCondition> > vecConditions;
+         TConfigurationNodeIterator itCondition("condition");
+         for(itCondition = itCondition.begin(&t_tree);
+            itCondition != itCondition.end();
+            ++itCondition) {
+            /* parse the condition */
+            vecConditions.emplace_back(ParseCondition(*itCondition));
+         }
+         return std::make_unique<SAllCondition>(*this,
+                                                bOnce,
+                                                std::move(vecActions),
+                                                std::move(vecConditions));
+      }
+      else if(strConditionType == "any") {
+         std::vector<std::unique_ptr<SCondition> > vecConditions;
+         TConfigurationNodeIterator itCondition("condition");
+         for(itCondition = itCondition.begin(&t_tree);
+            itCondition != itCondition.end();
+            ++itCondition) {
+            /* parse the condition */
+            vecConditions.emplace_back(ParseCondition(*itCondition));
+         }
+         return std::make_unique<SAnyCondition>(*this,
+                                                bOnce,
+                                                std::move(vecActions),
+                                                std::move(vecConditions));
+      }
+      else if(strConditionType == "entity") {
+         std::string strTarget;
+         std::string strId;
+         std::string strType;
+         CVector3 cPosition;
+         Real fThreshold;
+         GetNodeAttribute(t_tree, "target", strTarget);
+         std::string::size_type nSeperator = strTarget.find(':');
+         if(nSeperator != std::string::npos) {
+            strType = std::move(strTarget.substr(0, nSeperator));
+            strId = std::move(strTarget.substr(nSeperator + 1));
+         }
+         else {
+            strId = std::move(strTarget);
+         }
+         GetNodeAttribute(t_tree, "position", cPosition);
+         GetNodeAttribute(t_tree, "threshold", fThreshold);
+         return std::make_unique<SEntityCondition>(*this,
+                                                   bOnce,
+                                                   std::move(vecActions),
+                                                   std::move(strId),
+                                                   std::move(strType),
+                                                   cPosition,
+                                                   fThreshold);
+      }
+      else if(strConditionType == "timer") {
+         std::string strId;
+         UInt32 unValue;
+         GetNodeAttribute(t_tree, "id", strId);
+         GetNodeAttribute(t_tree, "value", unValue);
+         return std::make_unique<STimerCondition>(*this,
+                                                  bOnce,
+                                                  std::move(vecActions),
+                                                  std::move(strId),
+                                                  unValue);
+      }
+      else {
+         THROW_ARGOSEXCEPTION("Loop function condition type \"" << strConditionType << "\" not implemented.");
+      }
+   }
+
+   /****************************************/
+   /****************************************/
+
+   std::shared_ptr<CDISRoCSLoopFunctions::SAction> 
+      CDISRoCSLoopFunctions::ParseAction(TConfigurationNode& t_tree) {
+      std::string strActionType;
+      UInt32 unDelay = 0;
+      GetNodeAttribute(t_tree, "type", strActionType);
+      GetNodeAttributeOrDefault(t_tree, "delay", unDelay, unDelay);
+      if(strActionType == "add_timer") {
+         std::string strId;
+         GetNodeAttribute(t_tree, "id", strId);
+         return std::make_shared<SAddTimerAction>(*this, unDelay, std::move(strId));
+      }
+      else if(strActionType == "add_entity") {
+         TConfigurationNodeIterator itEntity;
+         itEntity = itEntity.begin(&t_tree);
+         if(itEntity == itEntity.end()) {
+            THROW_ARGOSEXCEPTION("No entity provided in an add_entity action");
+         }
+         return std::make_shared<SAddEntityAction>(*this, unDelay, *itEntity);
+      }
+      else if(strActionType == "terminate") {
+         return std::make_shared<STerminateAction>(*this, unDelay);
+      }
+      else {
+         THROW_ARGOSEXCEPTION("Loop function action type \"" << strActionType << "\" not implemented.");
+      }
+   }
 
    /****************************************/
    /****************************************/
@@ -217,8 +267,25 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   bool CDISRoCSLoopFunctions::IsExperimentFinished() {
-      return m_bTerminate;
+   bool CDISRoCSLoopFunctions::SAnyCondition::IsTrue() {
+      for(std::unique_ptr<SCondition>& ptr_condition : Conditions) {
+         if(ptr_condition->IsTrue()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /****************************************/
+   /****************************************/
+
+   bool CDISRoCSLoopFunctions::SAllCondition::IsTrue() {
+      for(std::unique_ptr<SCondition>& ptr_condition : Conditions) {
+         if(!ptr_condition->IsTrue()) {
+            return false;
+         }
+      }
+      return true;
    }
 
    /****************************************/

@@ -1,0 +1,188 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+  <!-- ************************* -->
+  <!-- * General configuration * -->
+  <!-- ************************* -->
+  <framework>
+    <system threads="0" />
+    <experiment length="0" ticks_per_second="5" random_seed="12345" />
+  </framework>
+  
+  <!-- *************** -->
+  <!-- * Controllers * -->
+  <!-- *************** -->
+  <controllers>
+    <lua_controller id="builderbot">
+      <actuators>
+        <builderbot_electromagnet_system implementation="default" />
+        <builderbot_differential_drive implementation="default" />
+        <builderbot_lift_system implementation="default" />
+        <builderbot_nfc implementation="default" />
+        <wifi implementation="default" />
+        <debug implementation="default">
+          <interface id="draw" />
+          <interface id="loop_functions" />
+        </debug>
+      </actuators>
+      <sensors>
+        <builderbot_camera_system implementation="default"
+          show_frustum="false" show_tag_rays="false" show_led_rays="false" />
+        <builderbot_rangefinders implementation="default" show_rays="false" />
+         <builderbot_system implementation="default" />
+        <builderbot_differential_drive implementation="default" />
+        <builderbot_electromagnet_system implementation="default" />
+        <builderbot_lift_system implementation="default" />
+        <builderbot_nfc implementation="default" show_rays="false" />
+        <wifi implementation="default" show_rays="false" />
+      </sensors>
+      <params />
+    </lua_controller>
+
+    <lua_controller id="block">
+      <actuators>
+        <directional_leds implementation="default" />
+        <radios implementation="default"/>
+        <debug implementation="default">
+          <interface id="draw" />
+          <interface id="loop_functions" />
+        </debug>
+      </actuators>
+      <sensors>
+        <radios implementation="default" show_rays="false"/>
+      </sensors>
+     <params />
+    </lua_controller>
+  </controllers>
+
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="@CMAKE_BINARY_DIR@/loop_functions/libdi_srocs_loop_functions"
+                  label="di_srocs_loop_functions">
+    <!-- add a block to the center if a builderbot is in any corner of the arena -->
+    <condition type="any" once="true">
+      <condition type="entity" target="builderbot:" position="2.75,2.75,0" threshold="0.25"/>
+      <condition type="entity" target="builderbot:" position="0.25,2.75,0" threshold="0.25"/>
+      <condition type="entity" target="builderbot:" position="0.25,0.25,0" threshold="0.25"/>      
+      <condition type="entity" target="builderbot:" position="2.75,0.25,0" threshold="0.25"/>
+      <action type="add_entity" delay="20">
+      	<block id="block1" init_led_color="green">
+          <body position="1.5,1.5,0.75" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+      </action>
+    </condition>
+
+    <!-- terminate the experiment if there is at least two blocks in the corners of the arena -->
+    <condition type="any" once="true">
+      <condition type="all">
+        <condition type="entity" target="block:" position="2.75,2.75,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.25"/>
+      </condition>    	
+      <condition type="all">
+        <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="0.25,0.25,0" threshold="0.25"/>
+      </condition>    	
+      <condition type="all">
+        <condition type="entity" target="block:" position="0.25,0.25,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="2.75,0.25,0" threshold="0.25"/>
+      </condition>    	
+      <condition type="all">
+        <condition type="entity" target="block:" position="2.75,0.25,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="2.75,2.75,0" threshold="0.25"/>
+      </condition>
+      <condition type="all">
+        <condition type="entity" target="block:" position="2.75,2.75,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="0.25,0.25,0" threshold="0.25"/>
+      </condition>    	
+      <condition type="all">
+        <condition type="entity" target="block:" position="2.75,0.25,0" threshold="0.25"/>
+        <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.25"/>
+      </condition>    	
+      <action type="terminate" delay="0"/>
+    </condition>
+
+    
+  </loop_functions>
+
+  <!-- *********************** -->
+  <!-- * Arena configuration * -->
+  <!-- *********************** -->
+    <arena size="3.05,3.05,2" center="1.525,1.525,0" >
+    <!-- add the arena walls -->
+    <box id="north" size="3.025,0.025,0.075" movable="false" >
+      <body position="1.5375,3.0375,0" orientation="0,0,0" />
+    </box>
+    <box id="east" size="0.025,3.025,0.075" movable="false" >
+      <body position="3.0375,1.5125,0" orientation="0,0,0" />
+    </box>
+    <box id="south" size="3.025,0.025,0.075" movable="false" >
+      <body position="1.5125,0.0125,0" orientation="0,0,0" />
+    </box>
+    <box id="west" size="0.025,3.025,0.075" movable="false" >
+      <body position="0.0125,1.5375,0" orientation="0,0,0" />
+    </box>
+    <!-- add a fixed seed block -->
+    <block id="block0" debug="false" movable="false">
+      <body position="1.0,1.5,0" orientation="0,0,0"/>
+      <controller config="block"/>
+    </block>
+     <!-- add two builderbots-->
+    <builderbot id="builderbot1" debug="false">
+      <body position="1.5,1.5,0" orientation="0,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+    <builderbot id="builderbot2" debug="false">
+      <body position="1.5,1.0,0" orientation="0,0,0"/>
+      <controller config="builderbot"/>
+    </builderbot>
+  </arena>
+
+  <!-- ******************* -->
+  <!-- * Physics engines * -->
+  <!-- ******************* -->
+  <physics_engines>
+    <dynamics3d id="dyn3d" iterations="25" default_friction="1">
+      <gravity g="9.8" />
+      <floor height="0.01" friction="1"/>
+      <virtual_magnetism />
+    </dynamics3d>
+  </physics_engines>
+
+  <!-- ********* -->
+  <!-- * Media * -->
+  <!-- ********* -->
+  <media>
+    <directional_led id="directional_leds" index="grid" grid_size="20,20,20"/>
+    <tag id="tags" index="grid" grid_size="20,20,20" />
+    <radio id="nfc" index="grid" grid_size="20,20,20" />
+    <radio id="wifi" index="grid" grid_size="20,20,20" />
+  </media>
+
+  <!-- ****************** -->
+  <!-- * Visualization * -->
+  <!-- ****************** -->
+
+  <visualization>
+    <qt-opengl lua_editor="false" show_boundary="false">
+      <user_functions library="@CMAKE_BINARY_DIR@/qtopengl_user_functions/libdi_qtopengl_user_functions" label="di_qtopengl_user_functions"/>
+      <camera>
+        <placement idx="0" position="1.525,1.525,5.25" look_at="1.525,1.525,0.5" lens_focal_length="43" up="1,0,0" />
+        <placement idx="1" position="1.525,-4.575,2.25" look_at="1.525,1.525,0.5" lens_focal_length="57" />
+        <placement idx="2" position="8.54,-5.49,5.25" look_at="1.525,1.525,0.5" lens_focal_length="84" />
+        <placement idx="3" position="7.625,1.525,2.25" look_at="1.525,1.525,0.5" lens_focal_length="57" />
+        <placement idx="4" position="8.54,8.54,5.25" look_at="1.525,1.525,0.5" lens_focal_length="84" />
+        <placement idx="5" position="1.525,7.625,2.25" look_at="1.525,1.525,0.5" lens_focal_length="57" />
+        <placement idx="6" position="-5.49,8.54,5.25" look_at="1.525,1.525,0.5" lens_focal_length="84" />
+        <placement idx="7" position="-4.575,1.525,2.25" look_at="1.525,1.525,0.5" lens_focal_length="57" />
+        <placement idx="8" position="-5.49,-5.49,5.25" look_at="1.525,1.525,0.5" lens_focal_length="84" />
+        <placement idx="9" position="1.525,1.525,5.25" look_at="1.525,1.525,0.5" lens_focal_length="43" up="1,0,0" />
+        <placement idx="10" position="1.525,1.525,5.25" look_at="1.525,1.525,0.5" lens_focal_length="43" up="1,0,0" />
+        <placement idx="11" position="1.525,1.525,5.25" look_at="1.525,1.525,0.5" lens_focal_length="43" up="1,0,0" />
+      </camera>
+    </qt-opengl>
+  </visualization>
+
+
+</argos-configuration>
