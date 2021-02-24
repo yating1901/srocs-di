@@ -25,15 +25,19 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 #
-# Check for Lua 5.3
+# Check for Lua 5.3+
 #
-find_package(Lua53)
-if(LUA53_FOUND)
-  set(ARGOS_WITH_LUA ON)
-  include_directories(${LUA_INCLUDE_DIR})
-else(LUA53_FOUND)
-  message(FATAL_ERROR "Lua 5.3 not found")
-endif(LUA53_FOUND)
+find_package(Lua)
+if(LUA_FOUND)
+  if(${LUA_VERSION_STRING} VERSION_GREATER_EQUAL "5.3")
+    set(ARGOS_WITH_LUA ON)
+    include_directories(${LUA_INCLUDE_DIR})
+  else()
+    message(FATAL_ERROR "Lua >=5.3 not found")
+  endif()
+else(LUA_FOUND)
+  message(FATAL_ERROR "Lua >=5.3 not found")
+endif(LUA_FOUND)
 
 #
 # Check if ARGoS-SRoCS is installed
