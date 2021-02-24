@@ -61,7 +61,7 @@
   <loop_functions library="@CMAKE_BINARY_DIR@/loop_functions/libdi_srocs_loop_functions"
                   label="di_srocs_loop_functions">
     <!-- add a block to the center if a builderbot is in any corner of the arena -->
-    <condition type="any" once="true">
+    <!--condition type="any" once="true">
       <condition type="entity" target="builderbot:" position="2.75,2.75,0" threshold="0.25"/>
       <condition type="entity" target="builderbot:" position="0.25,2.75,0" threshold="0.25"/>
       <condition type="entity" target="builderbot:" position="0.25,0.25,0" threshold="0.25"/>      
@@ -72,10 +72,10 @@
           <controller config="block"/>
         </block>
       </action>
-    </condition>
+    </condition-->
 
     <!-- terminate the experiment if there is at least two blocks in the corners of the arena -->
-    <condition type="any" once="true">
+    <!--condition type="any" once="true">
       <condition type="all">
         <condition type="entity" target="block:" position="2.75,2.75,0" threshold="0.25"/>
         <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.25"/>
@@ -101,8 +101,30 @@
         <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.25"/>
       </condition>    	
       <action type="terminate" delay="0"/>
+    </condition-->
+
+    <!-- add a block to the center of the arena if there isn't already a block there -->
+    <condition type="not">
+      <condition type="entity" target="block:" position="1.0,1.5,0" threshold="0.1"/>
+      <action type="add_entity" delay="0">
+        <block id="block" init_led_color="green">
+          <body position="1.0,1.5,0" orientation="0,0,0"/>
+          <controller config="block"/>
+        </block>
+      </action>
     </condition>
 
+    <!-- once there is a block in each corner of the arena, remove all of them -->
+    <condition type="all" once="true">
+      <condition type="entity" target="block:" position="2.75,0.25,0" threshold="0.5"/>
+      <condition type="entity" target="block:" position="2.75,2.75,0" threshold="0.5"/>
+      <condition type="entity" target="block:" position="0.25,2.75,0" threshold="0.5"/>
+      <condition type="entity" target="block:" position="0.25,0.25,0" threshold="0.5"/>
+      <action type="remove_entity" delay="0" target="block:" position="2.75,0.25,0" threshold="0.5"/>
+      <action type="remove_entity" delay="0" target="block:" position="2.75,2.75,0" threshold="0.5"/>
+      <action type="remove_entity" delay="0" target="block:" position="0.25,2.75,0" threshold="0.5"/>
+      <action type="remove_entity" delay="0" target="block:" position="0.25,0.25,0" threshold="0.5"/>
+    </condition>
     
   </loop_functions>
 

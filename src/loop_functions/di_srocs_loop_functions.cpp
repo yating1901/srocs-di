@@ -43,7 +43,7 @@ namespace argos {
       /* reenable all conditions */
       for(std::unique_ptr<SCondition>& ptr_condition : m_vecConditions) {
          ptr_condition->Enabled = true;
-      }     
+      }
    }
 
    /****************************************/
@@ -157,6 +157,14 @@ namespace argos {
                                                 std::move(vecActions),
                                                 std::move(vecConditions));
       }
+      else if(strConditionType == "not") {
+         TConfigurationNode& tCondition = GetNode(t_tree, "condition");
+         std::unique_ptr<SCondition> ptrCondition = ParseCondition(tCondition);
+         return std::make_unique<SNotCondition>(*this,
+                                                bOnce,
+                                                std::move(vecActions),
+                                                std::move(ptrCondition));
+      }
       else if(strConditionType == "entity") {
          std::string strTarget;
          std::string strId;
@@ -219,6 +227,33 @@ namespace argos {
             THROW_ARGOSEXCEPTION("No entity provided in an add_entity action");
          }
          return std::make_shared<SAddEntityAction>(*this, unDelay, *itEntity);
+      }
+      else if(strActionType == "remove_entity") {
+         std::string strTarget;
+         std::string strId;
+         std::string strType;
+         std::experimental::optional<std::pair<CVector3, Real> > optPosition;
+         GetNodeAttribute(t_tree, "target", strTarget);
+         std::string::size_type nSeperator = strTarget.find(':');
+         if(nSeperator != std::string::npos) {
+            strType = std::move(strTarget.substr(0, nSeperator));
+            strId = std::move(strTarget.substr(nSeperator + 1));
+         }
+         else {
+            strId = std::move(strTarget);
+         }
+         if(NodeAttributeExists(t_tree, "position")) {
+            CVector3 cPosition;
+            Real fThreshold;
+            GetNodeAttribute(t_tree, "position", cPosition);
+            GetNodeAttribute(t_tree, "threshold", fThreshold);
+            optPosition.emplace(std::make_pair(cPosition, fThreshold));
+         }
+         return std::make_shared<SRemoveEntityAction>(*this,
+                                                      unDelay,
+                                                      std::move(strId),
+                                                      std::move(strType),
+                                                      optPosition);
       }
       else if(strActionType == "terminate") {
          return std::make_shared<STerminateAction>(*this, unDelay);
@@ -291,6 +326,13 @@ namespace argos {
    /****************************************/
    /****************************************/
 
+   bool CDISRoCSLoopFunctions::SNotCondition::IsTrue() {
+      return !(Condition->IsTrue());
+   }
+
+   /****************************************/
+   /****************************************/
+
    bool CDISRoCSLoopFunctions::SEntityCondition::IsTrue() {
       try {
          std::vector<CEntity*> vecCandidateEntities;
@@ -343,7 +385,29 @@ namespace argos {
 
    void CDISRoCSLoopFunctions::SAddEntityAction::Execute() {
       CEntity* pcEntity = CFactory<CEntity>::New(Configuration.Value());
+      std::string strId;
+      GetNodeAttribute(Configuration, "id", strId);
+      try {
+         Parent.GetSpace().GetEntity(strId);
+         /* if we get here then we need to pick a new id */
+         UInt32 unSuffix = 0;
+         for(;;) {
+            try {
+               Parent.GetSpace().GetEntity(strId + std::to_string(unSuffix));
+               unSuffix++;
+            }
+            catch(CARGoSException& ex) {
+               /* success, no entity with this id */
+               break;
+            }
+         }
+         SetNodeAttribute(Configuration, "id", strId + std::to_string(unSuffix));
+      }
+      catch(CARGoSException& ex) {}
       pcEntity->Init(Configuration);
+      /* we need to reuse Configuration so set it back to the base id */
+      SetNodeAttribute(Configuration, "id", strId);
+      /* finally, attempt to add the entity to the simulator */
       CallEntityOperation<CSpaceOperationAddEntity, CSpace, void>(Parent.GetSpace(), *pcEntity);
       /* attempt to do a collision check */
       CComposableEntity* pcComposableEntity =
@@ -367,6 +431,53 @@ namespace argos {
       LOGERR << "[WARNING] Could not perform collision test for entity \""
              << pcEntity->GetId()
              << std::endl;
+   }
+
+   /****************************************/
+   /****************************************/
+
+   void CDISRoCSLoopFunctions::SRemoveEntityAction::Execute() {
+      try {
+         std::vector<CEntity*> vecCandidateEntities;
+         if(!EntityType.empty()) {
+            for(CEntity* pc_entity : Parent.GetSpace().GetRootEntityVector()) {
+               if(pc_entity->GetTypeDescription() == EntityType) {
+                  if(!EntityId.empty() && (pc_entity->GetId() != EntityId)) {
+                     continue;
+                  }
+                  vecCandidateEntities.push_back(pc_entity);
+               }
+            }
+         }
+         else {
+            vecCandidateEntities.push_back(&Parent.GetSpace().GetEntity(EntityId));
+         }
+         if(Position) {
+            const CVector3& cPosition = Position->first;
+            const Real& fThreshold = Position->second;
+            for(CEntity* pc_entity : vecCandidateEntities) {
+               CComposableEntity* pcComposableEntity =
+                  dynamic_cast<CComposableEntity*>(pc_entity);
+               if(pcComposableEntity != nullptr && pcComposableEntity->HasComponent("body")) {
+                  CEmbodiedEntity& cEmbodiedEntity =
+                     pcComposableEntity->GetComponent<CEmbodiedEntity>("body");
+                  Real fDistance =
+                     Distance(cPosition, cEmbodiedEntity.GetOriginAnchor().Position);
+                  if(fDistance < fThreshold) {
+                     /* remove entities within threshold of the specified position */
+                     CallEntityOperation<CSpaceOperationRemoveEntity, CSpace, void>(Parent.GetSpace(), *pc_entity);
+                  }
+               }
+            }
+         }
+         else {
+            for(CEntity* pc_entity : vecCandidateEntities) {
+               /* remove entities */
+               CallEntityOperation<CSpaceOperationRemoveEntity, CSpace, void>(Parent.GetSpace(), *pc_entity);
+            }
+         }
+      }
+      catch(CARGoSException& ex) {}
    }
 
    /****************************************/

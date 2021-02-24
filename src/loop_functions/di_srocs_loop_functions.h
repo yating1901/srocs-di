@@ -14,6 +14,8 @@ namespace argos {
 #include <argos3/core/utility/math/vector3.h>
 #include <argos3/core/utility/math/range.h>
 
+#include <experimental/optional>
+
 namespace argos {
 
    class CDISRoCSLoopFunctions : public CLoopFunctions {
@@ -83,6 +85,22 @@ namespace argos {
          TConfigurationNode Configuration;
       };
 
+      struct SRemoveEntityAction : SAction {
+         SRemoveEntityAction(CDISRoCSLoopFunctions& c_parent,
+                             UInt32 un_delay,
+                             std::string&& str_entity_id,
+                             std::string&& str_entity_type,
+                             std::experimental::optional<std::pair<CVector3, Real>> opt_position) :
+            SAction(c_parent, un_delay),
+            EntityId(std::move(str_entity_id)),
+            EntityType(std::move(str_entity_type)),
+            Position(opt_position) {}
+         virtual void Execute() override;
+         std::string EntityId;
+         std::string EntityType;
+         std::experimental::optional<std::pair<CVector3, Real>> Position;
+      };
+
       struct SAddTimerAction : SAction {
          SAddTimerAction(CDISRoCSLoopFunctions& c_parent,
                          UInt32 un_delay,
@@ -120,6 +138,17 @@ namespace argos {
             Conditions(std::move(vec_conditions)) {}
          virtual bool IsTrue() override;
          std::vector<std::unique_ptr<SCondition> > Conditions;
+      };
+
+      struct SNotCondition : SCondition {
+         SNotCondition(CDISRoCSLoopFunctions& c_parent,
+                       bool b_once,
+                       std::vector<std::shared_ptr<SAction> >&& vec_actions,
+                       std::unique_ptr<SCondition>&& ptr_condition) :
+            SCondition(c_parent, b_once, std::move(vec_actions)),
+            Condition(std::move(ptr_condition)) {}
+         virtual bool IsTrue() override;
+         std::unique_ptr<SCondition> Condition;
       };
 
       struct SEntityCondition : SCondition {
